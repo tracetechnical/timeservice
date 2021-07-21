@@ -8,6 +8,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.Calendar.HOUR_OF_DAY
+import java.util.Calendar.MINUTE
 
 @Component
 class TimeService(val mqttService: MqttService, val sunCalc: SunriseSunsetCalculator) {
@@ -40,9 +41,10 @@ class TimeService(val mqttService: MqttService, val sunCalc: SunriseSunsetCalcul
         val sunUp = sunrise.before(now) && sunset.after(now)
         val sunDown = sunrise.before(now) && sunset.before(now)
         val sunDelta = sunset.get(HOUR_OF_DAY)-sunrise.get(HOUR_OF_DAY)
-        val sunDegreesPerHour = 180 / sunDelta
+        val sunDegreesPerHour: Float = 180F / sunDelta
         val currentSunriseDeltaHour = now.get(HOUR_OF_DAY) - sunrise.get(HOUR_OF_DAY)
-        val currentSunPositionDegrees = currentSunriseDeltaHour * sunDegreesPerHour
+        val fractionalHour: Float = now.get(MINUTE) / 60F
+        val currentSunPositionDegrees: Float = currentSunriseDeltaHour * (sunDegreesPerHour + fractionalHour)
         diffPublish("sun/rise", sunrise.time.toString())
         diffPublish("sun/set", sunset.time.toString())
         diffPublish("sun/up", "$sunUp")
