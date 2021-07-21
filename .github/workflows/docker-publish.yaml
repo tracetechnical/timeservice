@@ -1,0 +1,50 @@
+name: Docker
+
+on:
+  create:
+    tags:
+      - v*
+  push:
+    # Publish `master` as Docker `latest` image.
+    branches:
+      - master
+
+    # Publish `v1.2.3` tags as releases.
+    tags:
+      - v*
+
+  # Run tests for any PRs.
+  pull_request:
+
+env:
+  IMAGE_NAME: image
+
+jobs:
+  # See also https://docs.docker.com/docker-hub/builds/automated-testing/
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Prepare image info
+        run: |
+          # Strip git ref prefix from version
+          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+
+          # Strip "v" prefix from tag name
+          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
+
+          # Use Docker `latest` tag convention
+          [ "$VERSION" == "master" ] && VERSION=latest
+
+          echo VERSION=$VERSION >> $GITHUB_ENV
+
+      - uses: whoan/docker-build-with-cache-action@v5
+        with:
+          username: "pheonixtech"
+          password: "${{ secrets.CANISTER_PASSWORD }}"
+          registry: registry.gitlab.com
+          #or
+          #registry: ghcr.io
+          image_name: "pheonixtech/timeservice"
+          stages_image_name: "pheonixtech/timeservice"
+          image_tag: "${{ env.VERSION}}"
