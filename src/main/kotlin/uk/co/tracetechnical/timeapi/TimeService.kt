@@ -9,6 +9,7 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.Calendar.HOUR_OF_DAY
 import java.util.Calendar.MINUTE
+import java.util.EnumSet.range
 
 @Component
 class TimeService(val mqttService: MqttService, val sunCalc: SunriseSunsetCalculator) {
@@ -31,11 +32,18 @@ class TimeService(val mqttService: MqttService, val sunCalc: SunriseSunsetCalcul
         diffPublish("time/hour", getDateSegment("HH"))
         diffPublish("time/minute", getDateSegment("mm"))
         diffPublish("time/second", getDateSegment("ss"))
-        workoutSun()
+        val now = Calendar.getInstance()
+        val hour = now.get(HOUR_OF_DAY)
+        val daytime = (IntRange(8,18).contains(hour))
+        val evening = (IntRange(19,22).contains(hour))
+        val night = (IntRange(0,7).contains(hour) || hour == 23)
+        diffPublish("timeOfDay/daytime", "$daytime")
+        diffPublish("timeOfDay/evening", "$evening")
+        diffPublish("timeOfDay/night", "$night")
+        workoutSun(now)
     }
 
-    private fun workoutSun() {
-        val now = Calendar.getInstance()
+    private fun workoutSun(now: Calendar) {
         val sunrise = sunCalc.getCivilSunriseCalendarForDate(now)
         val sunset = sunCalc.getCivilSunsetCalendarForDate(now)
         val sunDelta = sunset.get(HOUR_OF_DAY)-sunrise.get(HOUR_OF_DAY)
