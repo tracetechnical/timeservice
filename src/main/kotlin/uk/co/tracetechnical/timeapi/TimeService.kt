@@ -15,6 +15,7 @@ import java.util.EnumSet.range
 class TimeService(val mqttService: MqttService, val sunCalc: SunriseSunsetCalculator) {
     private val lastValues: MutableMap<String,String> = emptyMap<String,String>().toMutableMap()
     private var tickTock = false
+    private val DAYS: Array<String> = arrayOf("Mon", "Tue", "Wed", "Thu", "Fri")
     @Scheduled(fixedRate = 1000)
     fun reportTime() {
         val isWeekday = parseInt(getDateSegment("e")) < 6
@@ -22,7 +23,7 @@ class TimeService(val mqttService: MqttService, val sunCalc: SunriseSunsetCalcul
         tickTock = !tickTock
         diffPublish("time/tick", "$tickTock")
         diffPublish("time/day", getDateSegment("dd"))
-        diffPublish("time/dayOfWeek", getDateSegment("e"))
+        diffPublish("time/dayOfWeek","${DAYS.indexOf(getDateSegment("EE"))}")
         diffPublish("time/isWeekday", "$isWeekday")
         diffPublish("time/isWeekend", "$isWeekend")
         diffPublish("time/dayOfYear", getDateSegment("DD"))
