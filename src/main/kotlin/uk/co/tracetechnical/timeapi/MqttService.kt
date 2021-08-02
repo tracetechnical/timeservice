@@ -17,6 +17,8 @@ class MqttService {
         connOpts.isAutomaticReconnect = true
         connOpts.isCleanSession = true
         connOpts.connectionTimeout = 0
+        connOpts.keepAliveInterval = 0
+
         try {
             txClient = MqttClient(broker, clientId + "tx", txPersistence)
             println("Connecting to broker (Tx): $broker")

@@ -24,7 +24,7 @@ repositories {
 dependencies {
     implementation("io.reactivex.rxjava2:rxjava:2.2.20")
     implementation("com.luckycatlabs:SunriseSunsetCalculator:1.2")
-    implementation("org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.0")
+    implementation("org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
