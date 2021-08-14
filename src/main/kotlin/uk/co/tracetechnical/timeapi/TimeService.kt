@@ -63,7 +63,7 @@ class TimeService(val mqttService: MqttService, val sunCalc: SunriseSunsetCalcul
 
     private fun diffPublish(topic: String, value: String) {
         if(!lastValues.containsKey(topic) || (lastValues.containsKey(topic) && lastValues[topic] != value)) {
-            mqttService.publish(topic, value)
+            mqttService.publish(topic, value, true)
             lastValues[topic] = value
         }
     }

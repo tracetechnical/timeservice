@@ -33,10 +33,11 @@ class MqttService {
         println("Connected")
     }
 
-    fun publish(topic: String, content: String) {
+    fun publish(topic: String, content: String, retain: Boolean) {
         try {
             val message = MqttMessage(content.toByteArray())
             message.qos = 0
+            message.isRetained = retain
             txClient!!.publish(topic, message)
         } catch (me: MqttException) {
             handleException(me)
