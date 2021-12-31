@@ -37,7 +37,8 @@ jobs:
           [ "$VERSION" == "master" ] && VERSION=latest
 
           echo VERSION=$VERSION >> $GITHUB_ENV
-
+      - run: |
+          docker run --rm --privileged hypriot/qemu-register
       - uses: whoan/docker-build-with-cache-action@v5
         with:
           username: "pheonixtech"
