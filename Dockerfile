@@ -5,7 +5,7 @@ RUN apt-get update
 RUN apt-get install haveged -y
 RUN gradle build --no-daemon
 
-FROM openjdk:11-jre-slim
+FROM arm64v8/openjdk:11-jre-slim
 
 EXPOSE 8080
 
