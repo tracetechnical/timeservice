@@ -40,6 +40,7 @@ class TimeService(val mqttService: MqttService, val sunCalc: SunriseSunsetCalcul
         if(bedtimeStr != null) {
             bedtime = Integer.parseInt(bedtimeStr)
         }
+        println("Bedtime set to $bedtime:00")
         val sunrise = sunCalc.getCivilSunriseCalendarForDate(now).get(HOUR_OF_DAY)
         val sunset = sunCalc.getCivilSunsetCalendarForDate(now).get(HOUR_OF_DAY) + 1
         val daytime = IntRange(sunrise, sunset - 1).contains(hour)
