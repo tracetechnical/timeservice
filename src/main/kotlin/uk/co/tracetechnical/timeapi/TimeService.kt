@@ -16,6 +16,19 @@ class TimeService(val mqttService: MqttService, val sunCalc: SunriseSunsetCalcul
     private val lastValues: MutableMap<String,String> = emptyMap<String,String>().toMutableMap()
     private var tickTock = false
     private val DAYS: Array<String> = arrayOf("Mon", "Tue", "Wed", "Thu", "Fri")
+
+    var bedtime = getBedtimeVal()
+
+    fun getBedtimeVal(): Int {
+        var bedtimeStr = System.getenv("BEDTIME_HOUR")
+        var out = 23
+        if (bedtimeStr != null) {
+            out = Integer.parseInt(bedtimeStr)
+        }
+        println("Env var BEDTIME_HOUR was set to $out:00")
+        return out
+    }
+
     @Scheduled(fixedRate = 1000)
     fun reportTime() {
         val isWeekday = parseInt(getDateSegment("e")) < 6
@@ -35,12 +48,6 @@ class TimeService(val mqttService: MqttService, val sunCalc: SunriseSunsetCalcul
         diffPublish("time/second", getDateSegment("ss"))
         val now = Calendar.getInstance()
         val hour = now.get(HOUR_OF_DAY)
-        var bedtimeStr = System.getenv("BEDTIME_HOUR")
-        var bedtime = 23
-        if(bedtimeStr != null) {
-            bedtime = Integer.parseInt(bedtimeStr)
-        }
-        println("Bedtime set to $bedtime:00")
         val sunrise = sunCalc.getCivilSunriseCalendarForDate(now).get(HOUR_OF_DAY)
         val sunset = sunCalc.getCivilSunsetCalendarForDate(now).get(HOUR_OF_DAY) + 1
         val daytime = IntRange(sunrise, sunset - 1).contains(hour)
