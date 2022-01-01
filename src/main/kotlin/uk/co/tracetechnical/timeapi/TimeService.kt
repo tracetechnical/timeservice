@@ -35,9 +35,16 @@ class TimeService(val mqttService: MqttService, val sunCalc: SunriseSunsetCalcul
         diffPublish("time/second", getDateSegment("ss"))
         val now = Calendar.getInstance()
         val hour = now.get(HOUR_OF_DAY)
-        val daytime = (IntRange(6,18).contains(hour))
-        val evening = (IntRange(19,21).contains(hour))
-        val night = (IntRange(0,5).contains(hour) || IntRange(22,23).contains(hour))
+        var bedtimeStr = System.getenv("BEDTIME_HOUR")
+        var bedtime = 23
+        if(bedtimeStr != null) {
+            bedtime = Integer.parseInt(bedtimeStr)
+        }
+        val sunrise = sunCalc.getCivilSunriseCalendarForDate(now).get(HOUR_OF_DAY)
+        val sunset = sunCalc.getCivilSunsetCalendarForDate(now).get(HOUR_OF_DAY) + 1
+        val daytime = IntRange(sunrise, sunset - 1).contains(hour)
+        val evening = IntRange(sunset, bedtime - 1).contains(hour)
+        val night = IntRange(bedtime, 23).contains(hour) || hour < sunrise
         diffPublish("timeOfDay/daytime", "$daytime")
         diffPublish("timeOfDay/evening", "$evening")
         diffPublish("timeOfDay/night", "$night")
