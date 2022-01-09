@@ -39,13 +39,17 @@ jobs:
           echo VERSION=$VERSION >> $GITHUB_ENV
       - run: |
           docker run --rm --privileged hypriot/qemu-register
-      - uses: whoan/docker-build-with-cache-action@v5
-        with:
-          username: "pheonixtech"
-          password: "${{ secrets.CANISTER_PASSWORD }}"
-          registry: registry.gitlab.com
-          #or
-          #registry: ghcr.io
-          image_name: "pheonixtech/timeservice"
-          stages_image_name: "pheonixtech/timeservice"
-          image_tag: "${{ env.VERSION}}"
+          docker login -u pheonixtech -p ${{ secrets.CANISTER_PASSWORD }} registry.gitlab.com
+          # AMD64
+          docker build -t registry.gitlab.com/pheonixtech/timeservice:manifest-amd64 --build-arg ARCH=amd64/ .
+          docker push "registry.gitlab.com/pheonixtech/timeservice:manifest-amd64"
+
+          # ARM32V7
+          docker build -t registry.gitlab.com/pheonixtech/timeservice:manifest-arm32v7 --build-arg ARCH=arm32v7/ .
+          docker push "registry.gitlab.com/pheonixtech/timeservice:manifest-arm32v7"
+
+          # ARM64V8
+          docker build -t registry.gitlab.com/pheonixtech/timeservice:manifest-arm64v8 --build-arg ARCH=arm64v8/ .
+          docker push "registry.gitlab.com/pheonixtech/timeservice:manifest-arm64v8"
+          docker manifest create "registry.gitlab.com/pheonixtech/timeservice:${{ env.VERSION }}" --amend "registry.gitlab.com/pheonixtech/timeservice:manifest-amd64" --amend "registry.gitlab.com/pheonixtech/timeservice:manifest-arm32v7" --amend "registry.gitlab.com/pheonixtech/timeservice:manifest-arm64v8"
+          docker manifest push registry.gitlab.com/pheonixtech/timeservice:${{ env.VERSION }}
