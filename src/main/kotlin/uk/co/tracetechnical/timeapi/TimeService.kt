@@ -67,8 +67,8 @@ class TimeService(val mqttService: MqttService, val sunCalc: SunriseSunsetCalcul
         val currentSunriseDeltaHour = now.get(HOUR_OF_DAY) - sunrise.get(HOUR_OF_DAY)
         val fractionalHour: Float = now.get(MINUTE) / 60F
         val currentSunPositionDegrees: Float = currentSunriseDeltaHour * (sunDegreesPerHour + fractionalHour)
-        val sunUp = currentSunPositionDegrees < 180
-        val sunDown = currentSunPositionDegrees >= 180
+        val sunUp = currentSunPositionDegrees < 180 && currentSunPositionDegrees > 0
+        val sunDown = currentSunPositionDegrees >= 180 || currentSunPositionDegrees <= 0
         diffPublish("sun/rise", sunrise.time.toString())
         diffPublish("sun/set", sunset.time.toString())
         diffPublish("sun/up", "$sunUp")
