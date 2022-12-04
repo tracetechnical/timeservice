@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service
 
 @Service
 class MqttService {
-    private val broker = "tcp://192.168.10.229:1883"
+    private val broker = "tcp://mqtt.io.home:1883"
     private val clientId = "TimeService"
     private val connOpts = MqttConnectOptions()
     private val txPersistence = MemoryPersistence()
