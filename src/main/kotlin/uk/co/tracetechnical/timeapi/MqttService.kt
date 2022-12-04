@@ -23,8 +23,9 @@ class MqttService {
             txClient = MqttClient(broker, clientId + "tx", txPersistence)
             println("Connecting to broker (Tx): $broker")
             connectTx()
-        } catch (me: MqttException) {
-            handleException(me)
+        } catch (MqttException me) {
+            System.out.println("Did not get a connection, exiting to restart service");
+            System.exit(1);
         }
     }
 
@@ -59,5 +60,9 @@ class MqttService {
         println("cause " + me.cause)
         println("excep $me")
         me.printStackTrace()
+        if (me.getReasonCode() === 32104) {
+            println("Client not connected, restarting service")
+            System.exit(2)
+        }
     }
 }

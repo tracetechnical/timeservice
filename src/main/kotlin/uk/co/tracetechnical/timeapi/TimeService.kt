@@ -21,7 +21,7 @@ class TimeService(val mqttService: MqttService, val sunCalc: SunriseSunsetCalcul
 
     fun getBedtimeVal(): Int {
         var bedtimeStr = System.getenv("BEDTIME_HOUR")
-        var out = 23
+        var out = 22
         if (bedtimeStr != null) {
             out = Integer.parseInt(bedtimeStr)
         }
