@@ -11,6 +11,9 @@ import java.util.Calendar.HOUR_OF_DAY
 import java.util.Calendar.MINUTE
 import java.util.EnumSet.range
 
+
+data class Sun(val rise: String, val set: String, val up: Boolean, val down: Boolean, val position: Int)
+
 @Component
 class TimeService(val mqttService: MqttService, val sunCalc: SunriseSunsetCalculator) {
     private val lastValues: MutableMap<String,String> = emptyMap<String,String>().toMutableMap()
@@ -33,12 +36,15 @@ class TimeService(val mqttService: MqttService, val sunCalc: SunriseSunsetCalcul
     fun reportTime() {
         val isWeekday = parseInt(getDateSegment("e")) < 6
         val isWeekend = parseInt(getDateSegment("e")) >= 6
+        val now = Calendar.getInstance()
+
         tickTock = !tickTock
         diffPublish("time/tick", "$tickTock")
         diffPublish("time/day", getDateSegment("dd"))
         diffPublish("time/dayOfWeek","${DAYS.indexOf(getDateSegment("EE"))}")
         diffPublish("time/isWeekday", "$isWeekday")
         diffPublish("time/isWeekend", "$isWeekend")
+
         diffPublish("time/dayOfYear", getDateSegment("DD"))
         diffPublish("time/month", getDateSegment("MM"))
         diffPublish("time/year", getDateSegment("YY"))
@@ -46,20 +52,27 @@ class TimeService(val mqttService: MqttService, val sunCalc: SunriseSunsetCalcul
         diffPublish("time/hour", getDateSegment("HH"))
         diffPublish("time/minute", getDateSegment("mm"))
         diffPublish("time/second", getDateSegment("ss"))
-        val now = Calendar.getInstance()
+
+        val sun = workoutSun(now)
+        diffPublish("sun/rise", sun.rise)
+        diffPublish("sun/set", sun.set)
+        diffPublish("sun/up", "${sun.up}")
+        diffPublish("sun/down", "${sun.down}")
+        diffPublish("sun/position", "${sun.position}")
+
         val hour = now.get(HOUR_OF_DAY)
         val sunrise = sunCalc.getCivilSunriseCalendarForDate(now).get(HOUR_OF_DAY)
         val sunset = sunCalc.getCivilSunsetCalendarForDate(now).get(HOUR_OF_DAY) + 1
-        val daytime = IntRange(sunrise, sunset - 1).contains(hour)
+        val daytime = IntRange(sunrise, sunset - 1).contains(hour) && sun.up
         val evening = IntRange(sunset, bedtime - 1).contains(hour)
-        val night = IntRange(bedtime, 23).contains(hour) || hour < sunrise
+        val night = IntRange(bedtime, 23).contains(hour) || hour < sunrise || !sun.up
+
         diffPublish("timeOfDay/daytime", "$daytime")
         diffPublish("timeOfDay/evening", "$evening")
         diffPublish("timeOfDay/night", "$night")
-        workoutSun(now)
     }
 
-    private fun workoutSun(now: Calendar) {
+    private fun workoutSun(now: Calendar): Sun {
         val sunrise = sunCalc.getCivilSunriseCalendarForDate(now)
         val sunset = sunCalc.getCivilSunsetCalendarForDate(now)
         val sunDelta = sunset.get(HOUR_OF_DAY)-sunrise.get(HOUR_OF_DAY)
@@ -69,11 +82,8 @@ class TimeService(val mqttService: MqttService, val sunCalc: SunriseSunsetCalcul
         val currentSunPositionDegrees: Float = currentSunriseDeltaHour * (sunDegreesPerHour + fractionalHour)
         val sunUp = currentSunPositionDegrees < 180 && currentSunPositionDegrees > 0
         val sunDown = currentSunPositionDegrees >= 180 || currentSunPositionDegrees <= 0
-        diffPublish("sun/rise", sunrise.time.toString())
-        diffPublish("sun/set", sunset.time.toString())
-        diffPublish("sun/up", "$sunUp")
-        diffPublish("sun/down", "$sunDown")
-        diffPublish("sun/position", "$currentSunPositionDegrees")
+
+        return Sun(sunrise.time.toString(), sunset.time.toString(), sunUp, sunDown, currentSunPositionDegrees)
     }
 
     private fun diffPublish(topic: String, value: String) {
