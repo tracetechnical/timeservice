@@ -12,7 +12,7 @@ import java.util.Calendar.MINUTE
 import java.util.EnumSet.range
 
 
-data class Sun(val rise: String, val set: String, val up: Boolean, val down: Boolean, val position: Int)
+data class Sun(val rise: String, val set: String, val up: Boolean, val down: Boolean, val position: Float)
 
 @Component
 class TimeService(val mqttService: MqttService, val sunCalc: SunriseSunsetCalculator) {
