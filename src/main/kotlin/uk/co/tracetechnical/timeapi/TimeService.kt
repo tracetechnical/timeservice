@@ -18,7 +18,7 @@ data class Sun(val rise: String, val set: String, val up: Boolean, val down: Boo
 class TimeService(val mqttService: MqttService, val sunCalc: SunriseSunsetCalculator) {
     private val lastValues: MutableMap<String,String> = emptyMap<String,String>().toMutableMap()
     private var tickTock = false
-    private val DAYS: Array<String> = arrayOf("Mon", "Tue", "Wed", "Thu", "Fri")
+    private val DAYS: Array<String> = arrayOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
     var bedtime = getBedtimeVal()
 
@@ -40,6 +40,7 @@ class TimeService(val mqttService: MqttService, val sunCalc: SunriseSunsetCalcul
 
         tickTock = !tickTock
         diffPublish("time/tick", "$tickTock")
+
         diffPublish("time/day", getDateSegment("dd"))
         diffPublish("time/dayOfWeek","${DAYS.indexOf(getDateSegment("EE"))}")
         diffPublish("time/isWeekday", "$isWeekday")
