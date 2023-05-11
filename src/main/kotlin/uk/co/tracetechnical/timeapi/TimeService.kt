@@ -65,7 +65,7 @@ class TimeService(val mqttService: MqttService, val sunCalc: SunriseSunsetCalcul
         val sunset = sunCalc.getCivilSunsetCalendarForDate(now).get(HOUR_OF_DAY) + 1
         val daytime = IntRange(sunrise, sunset - 1).contains(hour) && sun.up
         val evening = IntRange(sunset, bedtime - 1).contains(hour)
-        val night = IntRange(bedtime, 23).contains(hour) || hour < sunrise || !sun.up
+        val night = IntRange(bedtime, 23).contains(hour) || hour < sunrise && !sun.up
 
         diffPublish("timeOfDay/daytime", "$daytime")
         diffPublish("timeOfDay/evening", "$evening")
