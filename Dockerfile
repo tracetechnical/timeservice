@@ -14,4 +14,4 @@ RUN mkdir /app
 
 COPY --from=build /home/gradle/src/build/libs/application.jar /app/application.jar
 
-ENTRYPOINT ["java", "-jar","/app/application.jar"]
+ENTRYPOINT ["java", "-jar", "-XX:TieredStopAtLevel=1", "-noverify", "/app/application.jar"]
