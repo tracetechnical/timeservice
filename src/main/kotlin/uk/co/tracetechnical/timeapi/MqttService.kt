@@ -10,7 +10,6 @@ class MqttService {
     private val clientId = "TimeService"
     private val connOpts = MqttConnectOptions()
     private val txPersistence = MemoryPersistence()
-    private var rxClient: MqttAsyncClient? = null
     private var txClient: MqttClient? = null
 
     init {
@@ -47,7 +46,7 @@ class MqttService {
 
     fun disconnect() {
         try {
-            rxClient!!.disconnect()
+            txClient!!.disconnect()
         } catch (me: MqttException) {
             handleException(me)
         }
