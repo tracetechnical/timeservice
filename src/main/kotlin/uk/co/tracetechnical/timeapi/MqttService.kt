@@ -59,7 +59,7 @@ class MqttService {
         println("cause " + me.cause)
         println("excep $me")
         me.printStackTrace()
-        if (me.getReasonCode() === 32104) {
+        if (me.getReasonCode() === 32104 || me.getReasonCode() === 32109) {
             println("Client not connected, restarting service")
             System.exit(2)
         }
