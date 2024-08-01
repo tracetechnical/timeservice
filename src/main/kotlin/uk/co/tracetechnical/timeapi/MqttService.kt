@@ -1,20 +1,26 @@
 package uk.co.tracetechnical.timeapi
 
-import org.eclipse.paho.client.mqttv3.*
-import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
+import org.eclipse.paho.mqttv5.client.MqttClient
+import org.eclipse.paho.mqttv5.client.MqttClientException.REASON_CODE_CLIENT_NOT_CONNECTED
+import org.eclipse.paho.mqttv5.client.MqttClientException.REASON_CODE_CONNECTION_LOST
+import org.eclipse.paho.mqttv5.client.MqttConnectionOptions
+import org.eclipse.paho.mqttv5.client.persist.MemoryPersistence
+import org.eclipse.paho.mqttv5.common.MqttException
+import org.eclipse.paho.mqttv5.common.MqttMessage
 import org.springframework.stereotype.Service
+import kotlin.system.exitProcess
 
 @Service
 class MqttService {
     private val broker = "tcp://mqtt.io.home:1883"
     private val clientId = "TimeService"
-    private val connOpts = MqttConnectOptions()
+    private val connOpts = MqttConnectionOptions()
     private val txPersistence = MemoryPersistence()
     private var txClient: MqttClient? = null
 
     init {
         connOpts.isAutomaticReconnect = true
-        connOpts.isCleanSession = true
+        connOpts.isCleanStart = true
         connOpts.connectionTimeout = 0
         connOpts.keepAliveInterval = 0
 
@@ -23,8 +29,8 @@ class MqttService {
             println("Connecting to broker (Tx): $broker")
             connectTx()
         } catch (me: MqttException) {
-            System.out.println("Did not get a connection, exiting to restart service");
-            System.exit(1);
+            println("Did not get a connection, exiting to restart service");
+            exitProcess(1);
         }
     }
 
@@ -59,9 +65,10 @@ class MqttService {
         println("cause " + me.cause)
         println("excep $me")
         me.printStackTrace()
-        if (me.getReasonCode() === 32104 || me.getReasonCode() === 32109) {
+        val exitCodes = listOf(REASON_CODE_CLIENT_NOT_CONNECTED, REASON_CODE_CONNECTION_LOST)
+        if (exitCodes.contains(me.reasonCode.toShort())) {
             println("Client not connected, restarting service")
-            System.exit(2)
+            exitProcess(2)
         }
     }
 }

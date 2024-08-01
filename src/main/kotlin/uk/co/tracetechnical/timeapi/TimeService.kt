@@ -1,32 +1,27 @@
 package uk.co.tracetechnical.timeapi
 
-import com.luckycatlabs.sunrisesunset.SunriseSunsetCalculator
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
+import uk.co.tracetechnical.timeapi.models.Sun
 import java.lang.Integer.parseInt
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.*
+import java.util.Calendar
 import java.util.Calendar.HOUR_OF_DAY
-import java.util.Calendar.MINUTE
-import java.util.EnumSet.range
-
-
-data class Sun(val rise: String, val set: String, val up: Boolean, val down: Boolean, val position: Float)
 
 @Component
-class TimeService(val mqttService: MqttService, val sunCalc: SunriseSunsetCalculator) {
-    private val lastValues: MutableMap<String,String> = emptyMap<String,String>().toMutableMap()
+class TimeService(val mqttService: MqttService, val sunService: SunService) {
+    private val lastValues: MutableMap<String, String> = emptyMap<String, String>().toMutableMap()
     private var tickTock = false
     private val DAYS: Array<String> = arrayOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
     var bedtime = getBedtimeVal()
 
-    fun getBedtimeVal(): Int {
-        var bedtimeStr = System.getenv("BEDTIME_HOUR")
+    private final fun getBedtimeVal(): Int {
+        val bedtimeStr = System.getenv("BEDTIME_HOUR")
         var out = 22
         if (bedtimeStr != null) {
-            out = Integer.parseInt(bedtimeStr)
+            out = parseInt(bedtimeStr)
         }
         println("Env var BEDTIME_HOUR was set to $out:00")
         return out
@@ -34,36 +29,23 @@ class TimeService(val mqttService: MqttService, val sunCalc: SunriseSunsetCalcul
 
     @Scheduled(fixedRate = 1000)
     fun reportTime() {
-        val isWeekday = parseInt(getDateSegment("e")) < 6
-        val isWeekend = parseInt(getDateSegment("e")) >= 6
         val now = Calendar.getInstance()
 
-        tickTock = !tickTock
-        diffPublish("time/tick", "$tickTock")
+        performTick()
 
-        diffPublish("time/day", getDateSegment("dd"))
-        diffPublish("time/dayOfWeek","${DAYS.indexOf(getDateSegment("EE"))}")
-        diffPublish("time/isWeekday", "$isWeekday")
-        diffPublish("time/isWeekend", "$isWeekend")
+        publishDayOfWeekData()
+        publishYearData()
+        publishHMSData()
 
-        diffPublish("time/dayOfYear", getDateSegment("DD"))
-        diffPublish("time/month", getDateSegment("MM"))
-        diffPublish("time/year", getDateSegment("YY"))
-        diffPublish("time/longYear", getDateSegment("YYYY"))
-        diffPublish("time/hour", getDateSegment("HH"))
-        diffPublish("time/minute", getDateSegment("mm"))
-        diffPublish("time/second", getDateSegment("ss"))
+        val sun = publishSunData(now)
 
-        val sun = workoutSun(now)
-        diffPublish("sun/rise", sun.rise)
-        diffPublish("sun/set", sun.set)
-        diffPublish("sun/up", "${sun.up}")
-        diffPublish("sun/down", "${sun.down}")
-        diffPublish("sun/position", "${sun.position}")
+        publishTimeOfDay(now, sun)
+    }
 
+    private fun publishTimeOfDay(now: Calendar, sun: Sun) {
         val hour = now.get(HOUR_OF_DAY)
-        val sunrise = sunCalc.getCivilSunriseCalendarForDate(now).get(HOUR_OF_DAY)
-        val sunset = sunCalc.getCivilSunsetCalendarForDate(now).get(HOUR_OF_DAY) + 1
+        val sunrise = sunService.getSunrise(now)
+        val sunset = sunService.getSunset(now)
         val daytime = IntRange(sunrise, sunset - 1).contains(hour) && sun.up
         val evening = IntRange(sunset, bedtime - 1).contains(hour)
         val night = IntRange(bedtime, 23).contains(hour) || hour < sunrise && !sun.up
@@ -73,22 +55,45 @@ class TimeService(val mqttService: MqttService, val sunCalc: SunriseSunsetCalcul
         diffPublish("timeOfDay/night", "$night")
     }
 
-    private fun workoutSun(now: Calendar): Sun {
-        val sunrise = sunCalc.getCivilSunriseCalendarForDate(now)
-        val sunset = sunCalc.getCivilSunsetCalendarForDate(now)
-        val sunDelta = sunset.get(HOUR_OF_DAY)-sunrise.get(HOUR_OF_DAY)
-        val sunDegreesPerHour: Float = 180F / sunDelta
-        val currentSunriseDeltaHour = now.get(HOUR_OF_DAY) - sunrise.get(HOUR_OF_DAY)
-        val fractionalHour: Float = now.get(MINUTE) / 60F
-        val currentSunPositionDegrees: Float = currentSunriseDeltaHour * (sunDegreesPerHour + fractionalHour)
-        val sunUp = currentSunPositionDegrees < 180 && currentSunPositionDegrees > 0
-        val sunDown = currentSunPositionDegrees >= 180 || currentSunPositionDegrees <= 0
+    private fun publishSunData(now: Calendar): Sun {
+        val sun = sunService.calculateSunParameters(now)
+        diffPublish("sun/rise", "${sun.rise}")
+        diffPublish("sun/set", "${sun.set}")
+        diffPublish("sun/up", "${sun.up}")
+        diffPublish("sun/down", "${sun.down}")
+        diffPublish("sun/position", "${sun.position}")
+        return sun
+    }
 
-        return Sun(sunrise.time.toString(), sunset.time.toString(), sunUp, sunDown, currentSunPositionDegrees)
+    private fun publishHMSData() {
+        diffPublish("time/hour", getDateSegment("HH"))
+        diffPublish("time/minute", getDateSegment("mm"))
+        diffPublish("time/second", getDateSegment("ss"))
+    }
+
+    private fun publishYearData() {
+        diffPublish("time/dayOfYear", getDateSegment("DD"))
+        diffPublish("time/month", getDateSegment("MM"))
+        diffPublish("time/year", getDateSegment("YY"))
+        diffPublish("time/longYear", getDateSegment("YYYY"))
+    }
+
+    private fun publishDayOfWeekData() {
+        val isWeekday = parseInt(getDateSegment("e")) < 6
+        val isWeekend = parseInt(getDateSegment("e")) >= 6
+        diffPublish("time/day", getDateSegment("dd"))
+        diffPublish("time/dayOfWeek", "${DAYS.indexOf(getDateSegment("EE"))}")
+        diffPublish("time/isWeekday", "$isWeekday")
+        diffPublish("time/isWeekend", "$isWeekend")
+    }
+
+    private fun performTick() {
+        tickTock = !tickTock
+        diffPublish("time/tick", "$tickTock")
     }
 
     private fun diffPublish(topic: String, value: String) {
-        if(!lastValues.containsKey(topic) || (lastValues.containsKey(topic) && lastValues[topic] != value)) {
+        if (!lastValues.containsKey(topic) || (lastValues.containsKey(topic) && lastValues[topic] != value)) {
             mqttService.publish(topic, value, true)
             lastValues[topic] = value
         }
