@@ -69,8 +69,8 @@ class TimeService(val mqttService: MqttService, val sunService: SunService) {
         diffPublish("time/hour", getDateSegment("HH"))
         diffPublish("time/minute", getDateSegment("mm"))
         diffPublish("time/second", getDateSegment("ss"))
-        diffPublish("time/fulltime", getDateSegment("hh:mm"))
-        diffPublish("time/fulltimesecs", getDateSegment("hh:mm:ss"))
+        diffPublish("time/fulltime", getDateSegment("HH:mm"))
+        diffPublish("time/fulltimesecs", getDateSegment("HH:mm:ss"))
     }
 
     private fun publishYearData() {
