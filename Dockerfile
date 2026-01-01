@@ -6,7 +6,7 @@ RUN apt-get update
 RUN apt-get install haveged -y
 RUN gradle build --no-daemon
 
-FROM ${ARCH}openjdk:11-jre-slim
+FROM ${ARCH}eclipse-temurin:11-jre-jammy
 
 EXPOSE 8080
 
