@@ -45,6 +45,9 @@ class MqttService(private val shutdownService: ShutdownService) {
             val message = MqttMessage(content.toByteArray())
             message.qos = 0
             message.isRetained = retain
+            if (txClient == null) {
+                shutdownService.shutdown(3)
+            }
             txClient!!.publish(topic, message)
         } catch (me: MqttException) {
             handleException(me)
