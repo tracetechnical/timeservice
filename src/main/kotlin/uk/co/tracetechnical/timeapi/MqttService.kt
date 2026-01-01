@@ -8,12 +8,13 @@ import org.eclipse.paho.mqttv5.client.persist.MemoryPersistence
 import org.eclipse.paho.mqttv5.common.MqttException
 import org.eclipse.paho.mqttv5.common.MqttMessage
 import org.springframework.stereotype.Service
+import java.util.*
 import kotlin.system.exitProcess
 
 @Service
-class MqttService {
+class MqttService(private val shutdownService: ShutdownService) {
     private val broker = "tcp://mqtt.io.home:1883"
-    private val clientId = "TimeService"
+    private val clientId = "TimeService-" + UUID.randomUUID().toString()
     private val connOpts = MqttConnectionOptions()
     private val txPersistence = MemoryPersistence()
     private var txClient: MqttClient? = null
@@ -29,6 +30,7 @@ class MqttService {
             println("Connecting to broker (Tx): $broker")
             connectTx()
         } catch (me: MqttException) {
+            shutdownService.shutdown(1)
             throw IllegalStateException("Failed to get an MQTT Connection")
         }
     }
@@ -66,7 +68,7 @@ class MqttService {
         me.printStackTrace()
         val exitCodes = listOf(REASON_CODE_CLIENT_NOT_CONNECTED, REASON_CODE_CONNECTION_LOST)
         if (exitCodes.contains(me.reasonCode.toShort())) {
-            throw IllegalStateException("Lost MQTT Connection")
+            shutdownService.shutdown(2)
         }
     }
 }
