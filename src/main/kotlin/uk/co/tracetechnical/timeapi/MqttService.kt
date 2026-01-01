@@ -29,8 +29,7 @@ class MqttService {
             println("Connecting to broker (Tx): $broker")
             connectTx()
         } catch (me: MqttException) {
-            println("Did not get a connection, exiting to restart service");
-            exitProcess(1);
+            throw IllegalStateException("Failed to get an MQTT Connection")
         }
     }
 
@@ -67,8 +66,7 @@ class MqttService {
         me.printStackTrace()
         val exitCodes = listOf(REASON_CODE_CLIENT_NOT_CONNECTED, REASON_CODE_CONNECTION_LOST)
         if (exitCodes.contains(me.reasonCode.toShort())) {
-            println("Client not connected, restarting service")
-            exitProcess(2)
+            throw IllegalStateException("Lost MQTT Connection")
         }
     }
 }
