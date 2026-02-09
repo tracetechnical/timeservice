@@ -12,7 +12,7 @@ import java.util.Calendar.HOUR_OF_DAY
 @Component
 class TimeService(val mqttService: MqttService, val sunService: SunService) {
     private val lastValues: MutableMap<String, String> = emptyMap<String, String>().toMutableMap()
-    private val noDiffCount: MutableMap><String, Int> = emptyMap<String, Int>().toMutableMap()
+    private val noDiffCount: MutableMap<String, Int> = emptyMap<String, Int>().toMutableMap()
     private var tickTock = false
     private val DAYS: Array<String> = arrayOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
@@ -103,7 +103,11 @@ class TimeService(val mqttService: MqttService, val sunService: SunService) {
             lastValues[topic] = value
             noDiffCount[topic] = 0
         } else {
-            noDiffCount[topic] += 1
+            if (noDiffCount[topic] != null) {
+                noDiffCount[topic] = noDiffCount[topic]!! + 1
+            } else {
+                noDiffCount[topic] = 1
+            }
         }
     }
 
