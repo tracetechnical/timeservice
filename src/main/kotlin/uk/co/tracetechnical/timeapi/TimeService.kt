@@ -97,13 +97,13 @@ class TimeService(val mqttService: MqttService, val sunService: SunService) {
     }
 
     private fun diffPublish(topic: String, value: String) {
-        if (!lastValues.containsKey(topic) || (lastValues.containsKey(topic) && lastValues[topic] != value)) {
+        if (!lastValues.containsKey(topic) || (lastValues.containsKey(topic) && lastValues[topic] != value) || (noDiffCount.containsKey(topic) && noDiffCount[topic]!! > 10)) {
             println("No diff counter for ${topic} was ${noDiffCount[topic]}")
             mqttService.publish(topic, value, true)
             lastValues[topic] = value
             noDiffCount[topic] = 0
         } else {
-            if (noDiffCount[topic] != null) {
+            if (noDiffCount.containsKey(topic)) {
                 noDiffCount[topic] = noDiffCount[topic]!! + 1
             } else {
                 noDiffCount[topic] = 1
