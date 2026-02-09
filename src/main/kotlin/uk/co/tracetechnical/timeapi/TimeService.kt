@@ -12,6 +12,7 @@ import java.util.Calendar.HOUR_OF_DAY
 @Component
 class TimeService(val mqttService: MqttService, val sunService: SunService) {
     private val lastValues: MutableMap<String, String> = emptyMap<String, String>().toMutableMap()
+    private val noDiffCount: MutableMap><String, Int> = emptyMap<String, Int>().toMutableMap()
     private var tickTock = false
     private val DAYS: Array<String> = arrayOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
@@ -97,8 +98,12 @@ class TimeService(val mqttService: MqttService, val sunService: SunService) {
 
     private fun diffPublish(topic: String, value: String) {
         if (!lastValues.containsKey(topic) || (lastValues.containsKey(topic) && lastValues[topic] != value)) {
+            println("No diff counter for ${topic} was ${noDiffCount[topic]}")
             mqttService.publish(topic, value, true)
             lastValues[topic] = value
+            noDiffCount[topic] = 0
+        } else {
+            noDiffCount[topic] += 1
         }
     }
 
