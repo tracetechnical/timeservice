@@ -25,8 +25,8 @@ class MqttService(private val shutdownService: ShutdownService) {
     init {
         connOpts.isAutomaticReconnect = true
         connOpts.isCleanStart = true
-        connOpts.connectionTimeout = 0
-        connOpts.keepAliveInterval = 0
+        connOpts.connectionTimeout = 30
+        connOpts.keepAliveInterval = 120
 
         try {
             txClient = MqttClient(broker, "$clientId-tx", txPersistence)
